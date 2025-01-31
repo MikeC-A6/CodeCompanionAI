@@ -1,0 +1,107 @@
+Gemini 2.0 Flash Thinking
+
+The Gemini 2.0 Flash Thinking model is an experimental model that's trained to generate the "thinking process" the model goes through as part of its response. As a result, the Flash Thinking model is capable of stronger reasoning capabilities in its responses than the Gemini 2.0 Flash Experimental model.
+
+Try the latest Flash Thinking model in Google AI Studio
+Use thinking models
+Flash Thinking models are available in Google AI Studio and through the Gemini API. One of the main considerations when using a model that returns the thinking process is how much information you want to expose to end users, as the thinking process can be quite verbose.
+
+By default, the Gemini API doesn't return thoughts in the response. To include thoughts in the response, you must set the include_thoughts field to true, as shown in the examples.
+
+Note: We have set up gemini-2.0-flash-thinking-exp as an alias to the latest Flash Thinking model. Use this alias to get the latest Flash thinking model, or specify the full model name.
+Send a basic request
+Python
+This example uses the new Google Genai SDK which is useful in this context for parsing out "thoughts" programmatically. To use the new thought parameter, you need to use the v1alpha version of the Gemini API.
+
+
+from google import genai
+
+client = genai.Client(api_key='GEMINI_API_KEY', http_options={'api_version':'v1alpha'})
+
+config = {'thinking_config': {'include_thoughts': True}}
+response = client.models.generate_content(
+    model='gemini-2.0-flash-thinking-exp',
+    contents='Explain how RLHF works in simple terms.',
+    config=config
+)
+
+# Usually the first part is the thinking process, but it's not guaranteed
+print(response.candidates[0].content.parts[0].text)
+print(response.candidates[0].content.parts[1].text)
+Work with thoughts
+On a standard request, the model responds with two parts, the thoughts and the model response. You can check programmatically if a part is a thought or not by seeing if the part.thought field is set to True.
+
+Python
+To use the new thought parameter, you need to use the v1alpha version of the Gemini API along with the new Google Genai SDK.
+
+
+from google import genai
+
+client = genai.Client(api_key='GEMINI_API_KEY', http_options={'api_version':'v1alpha'})
+
+config = {'thinking_config': {'include_thoughts': True}}
+response = client.models.generate_content(
+    model='gemini-2.0-flash-thinking-exp',
+    contents='Explain how RLHF works in simple terms.',
+    config=config
+)
+
+for part in response.candidates[0].content.parts:
+    if part.thought:
+        print(f"Model Thought:\n{part.text}\n")
+    else:
+        print(f"\nModel Response:\n{part.text}\n")
+Stream model thinking
+Thinking models generally take longer to respond than standard models. To stream the model thinking, you can use the generate_content_stream method.
+
+Python
+To use the new thought parameter, you need to use the v1alpha version of the Gemini API along with the new Google Genai SDK.
+
+
+from google import genai
+
+client = genai.Client(api_key='GEMINI_API_KEY', http_options={'api_version':'v1alpha'})
+
+config = {'thinking_config': {'include_thoughts': True}}
+
+for chunk in client.models.generate_content_stream(
+    model='gemini-2.0-flash-thinking-exp',
+    contents='What is your name?',
+    config=config
+):
+    for part in chunk.candidates[0].content.parts:
+        if part.thought:
+            print(f"Model Thought Chunk:\n{part.text}\n")
+        else:
+            print(f"\nModel Response:\n{part.text}\n")
+Multi-turn thinking conversations
+During multi-turn conversations, the model will by default not pass the thoughts from the previous turn to the next turn, but you can still see the thoughts on the most recent turn.
+
+Python
+The new Google Genai SDK provides the ability to create a multi-turn chat session which is helpful to manage the state of a conversation.
+
+
+import asyncio
+from google import genai
+
+client = genai.Client(api_key='GEMINI_API_KEY', http_options={'api_version':'v1alpha'})
+
+config = {'thinking_config': {'include_thoughts': True}}
+
+async def main():
+    chat = client.aio.chats.create(
+        model='gemini-2.0-flash-thinking-exp',
+        config=config
+    )
+    response = await chat.send_message('What is your name?')
+    print(response.text)
+    response = await chat.send_message('What did you just say before this?')
+    print(response.text)
+
+asyncio.run(main())
+Limitations
+The Flash Thinking model is an experimental model and has the following limitations:
+
+Text and image input only
+Text only output
+No JSON mode or Search Grounding
