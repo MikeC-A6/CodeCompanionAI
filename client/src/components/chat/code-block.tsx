@@ -4,7 +4,7 @@ import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-jsx';
 import 'prismjs/components/prism-tsx';
-import 'prismjs/themes/prism.css';
+import 'prismjs/themes/prism-tomorrow.css';
 
 interface CodeBlockProps {
   code: string;
@@ -12,17 +12,25 @@ interface CodeBlockProps {
 }
 
 export const CodeBlock: FC<CodeBlockProps> = ({ code, language = 'typescript' }) => {
+  // Extract the language from markdown code blocks if present
+  const match = code.match(/^```(\w+)/);
+  const detectedLang = match ? match[1] : language;
+  const cleanCode = code.replace(/^```(\w+)?\n/, '').replace(/```$/, '');
+
   const highlighted = Prism.highlight(
-    code,
-    Prism.languages[language] || Prism.languages.typescript,
-    language
+    cleanCode,
+    Prism.languages[detectedLang] || Prism.languages.typescript,
+    detectedLang
   );
 
   return (
-    <div className="relative rounded-md bg-slate-950 p-4 my-2">
+    <div className="relative rounded-lg bg-slate-950 p-4 my-4">
+      <div className="absolute right-3 top-3 text-xs text-slate-400">
+        {detectedLang}
+      </div>
       <pre className="overflow-x-auto">
         <code
-          className={`language-${language}`}
+          className={`language-${detectedLang} text-sm`}
           dangerouslySetInnerHTML={{ __html: highlighted }}
         />
       </pre>
